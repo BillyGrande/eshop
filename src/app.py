@@ -9,28 +9,28 @@ def home():
     recommended_products = [
         {
             'id': 1,
-            'name': 'Premium Wireless Headphones',
+            'name': 'Premium Noise-Cancelling Wireless Headphones with Extended Battery Life',
             'price': 129.99,
             'image': 'placeholder.jpg',
             'description': 'Noise-cancelling wireless headphones with premium sound quality.'
         },
         {
             'id': 2,
-            'name': 'Smart Fitness Watch',
+            'name': 'Smart Fitness Watch with Heart Rate Monitor',
             'price': 89.99,
             'image': 'placeholder.jpg',
             'description': 'Track your fitness goals with this advanced smart watch.'
         },
         {
             'id': 3,
-            'name': 'Portable Power Bank',
+            'name': 'Ultra-Portable 20,000mAh Power Bank with Fast Charging',
             'price': 49.99,
             'image': 'placeholder.jpg',
             'description': '20,000mAh power bank for all your charging needs on the go.'
         },
         {
             'id': 4,
-            'name': 'Wireless Bluetooth Speaker',
+            'name': 'Waterproof Bluetooth Speaker with 360° Sound',
             'price': 79.99,
             'image': 'placeholder.jpg',
             'description': 'Waterproof speaker with 360° sound and 12-hour battery life.'
