@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EShop - Your Online Shopping Destination</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>EShop</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/" class="active">Home</a></li>
+                    <li><a href="#">Categories</a></li>
+                    <li><a href="#">Deals</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <a href="#" class="search-icon">🔍</a>
+                <a href="#" class="cart-icon">🛒</a>
+                <a href="#" class="account-icon">👤</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Welcome to EShop</h2>
+                <p>Find the best products at the best prices</p>
+                <a href="#" class="btn">Shop Now</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="recommendations">
+        <div class="container">
+            <h2>Recommended For You</h2>
+            <div class="product-grid">
+                {% for product in recommended_products %}
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="{{ url_for('static', filename='images/' + product.image) }}" alt="{{ product.name }}">
+                    </div>
+                    <div class="product-info">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-description">{{ product.description }}</p>
+                        <p class="product-price">${{ product.price }}</p>
+                        <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="categories">
+        <div class="container">
+            <h2>Shop by Category</h2>
+            <div class="category-grid">
+                <div class="category-card">
+                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="Electronics">
+                    <h3>Electronics</h3>
+                </div>
+                <div class="category-card">
+                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="Clothing">
+                    <h3>Clothing</h3>
+                </div>
+                <div class="category-card">
+                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="Home & Kitchen">
+                    <h3>Home & Kitchen</h3>
+                </div>
+                <div class="category-card">
+                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="Sports">
+                    <h3>Sports</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About EShop</h3>
+                    <p>Your trusted online shopping destination for all your needs.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Customer Service</h3>
+                    <ul>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Account</h3>
+                    <ul>
+                        <li><a href="#">Sign In</a></li>
+                        <li><a href="#">Register</a></li>
+                        <li><a href="#">Order History</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Connect With Us</h3>
+                    <div class="social-icons">
+                        <a href="#">📱</a>
+                        <a href="#">📘</a>
+                        <a href="#">📸</a>
+                        <a href="#">🐦</a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 EShop. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
