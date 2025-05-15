@@ -49,9 +49,11 @@
                         <img src="{{ url_for('static', filename='images/' + product.image) }}" alt="{{ product.name }}">
                     </div>
                     <div class="product-info">
-                        <h3>{{ product.name }}</h3>
-                        <p class="product-description">{{ product.description }}</p>
-                        <p class="product-price">${{ product.price }}</p>
+                        <div class="product-content">
+                            <h3>{{ product.name }}</h3>
+                            <p class="product-description">{{ product.description }}</p>
+                            <p class="product-price">${{ product.price }}</p>
+                        </div>
                         <button class="add-to-cart">Add to Cart</button>
                     </div>
                 </div>
