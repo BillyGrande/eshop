@@ -24,7 +24,11 @@
             <div class="user-actions">
                 <a href="#" class="search-icon">🔍</a>
                 <a href="#" class="cart-icon">🛒</a>
-                <a href="#" class="account-icon">👤</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.logout') }}" class="account-icon">🚪</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="account-icon">👤</a>
+                {% endif %}
             </div>
         </div>
     </header>

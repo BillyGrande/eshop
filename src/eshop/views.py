@@ -1,40 +1,36 @@
 from eshop import app
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify, request
+from flask_login import current_user, login_required
+from .models import db, Product, UserInteraction
+from .recommender import Recommender
 import os
 
 @app.route('/')
 def home():
-    # Sample data for product recommendations
-    recommended_products = [
-        {
-            'id': 1,
-            'name': 'Premium Noise-Cancelling Wireless Headphones with Extended Battery Life',
-            'price': 129.99,
-            'image': 'placeholder.jpg',
-            'description': 'Noise-cancelling wireless headphones with premium sound quality.'
-        },
-        {
-            'id': 2,
-            'name': 'Smart Fitness Watch with Heart Rate Monitor',
-            'price': 89.99,
-            'image': 'placeholder.jpg',
-            'description': 'Track your fitness goals with this advanced smart watch.'
-        },
-        {
-            'id': 3,
-            'name': 'Ultra-Portable 20,000mAh Power Bank with Fast Charging',
-            'price': 49.99,
-            'image': 'placeholder.jpg',
-            'description': '20,000mAh power bank for all your charging needs on the go.'
-        },
-        {
-            'id': 4,
-            'name': 'Waterproof Bluetooth Speaker with 360° Sound',
-            'price': 79.99,
-            'image': 'placeholder.jpg',
-            'description': 'Waterproof speaker with 360° sound and 12-hour battery life.'
-        }
-    ]
+    # Initialize sample products if database is empty
+    if Product.query.count() == 0:
+        sample_products = [
+            Product(name='Premium Noise-Cancelling Wireless Headphones', price=129.99, 
+                   category='Electronics', image='placeholder.jpg',
+                   description='Noise-cancelling wireless headphones with premium sound quality.'),
+            Product(name='Smart Fitness Watch', price=89.99,
+                   category='Electronics', image='placeholder.jpg',
+                   description='Track your fitness goals with this advanced smart watch.'),
+            Product(name='Ultra-Portable Power Bank', price=49.99,
+                   category='Electronics', image='placeholder.jpg',
+                   description='20,000mAh power bank for all your charging needs.'),
+            Product(name='Waterproof Bluetooth Speaker', price=79.99,
+                   category='Electronics', image='placeholder.jpg',
+                   description='Waterproof speaker with 360° sound.')
+        ]
+        db.session.add_all(sample_products)
+        db.session.commit()
+    
+    # Get personalized recommendations
+    if current_user.is_authenticated:
+        recommended_products = Recommender.get_recommendations_for_user(current_user.id)
+    else:
+        recommended_products = Recommender.get_popular_products(4)
     
     return render_template('index.html', recommended_products=recommended_products)
 
@@ -43,5 +39,43 @@ def serve_placeholder(filename):
     # For simplicity, serve a placeholder for all image requests
     return send_from_directory(os.path.join(app.root_path, 'static'), 'style.css')
 
-#if __name__ == '__main__':
-#    app.run(debug=True)
+@app.route('/track', methods=['POST'])
+def track_interaction():
+    """Track user interactions with products"""
+    if not current_user.is_authenticated:
+        return jsonify({'status': 'ok'})
+    
+    data = request.get_json()
+    product_id = data.get('product_id')
+    interaction_type = data.get('type', 'view')
+    
+    if product_id:
+        interaction = UserInteraction(
+            user_id=current_user.id,
+            product_id=product_id,
+            interaction_type=interaction_type
+        )
+        db.session.add(interaction)
+        db.session.commit()
+    
+    return jsonify({'status': 'ok'})
+
+@app.route('/product/<int:product_id>')
+def product_detail(product_id):
+    """Show product details and track view"""
+    product = Product.query.get_or_404(product_id)
+    
+    # Track view if user is authenticated
+    if current_user.is_authenticated:
+        interaction = UserInteraction(
+            user_id=current_user.id,
+            product_id=product_id,
+            interaction_type='view'
+        )
+        db.session.add(interaction)
+        db.session.commit()
+    
+    # Get similar products
+    similar_products = Recommender.get_similar_products(product_id, limit=4)
+    
+    return render_template('product.html', product=product, similar_products=similar_products)
