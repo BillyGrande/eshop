@@ -1,0 +1,20 @@
+name: Push on remote server
+
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH with key
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            systemctl stop eshop.service
+            cd /root/eshop
+            git pull
+            systemctl start eshop.service
