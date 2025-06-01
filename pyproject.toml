@@ -25,3 +25,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eshop"]
+
+
+[tool.rye.scripts]
+devserver = "flask --app src/eshop run"

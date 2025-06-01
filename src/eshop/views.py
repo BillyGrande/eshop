@@ -1,7 +1,6 @@
+from eshop import app
 from flask import Flask, render_template, send_from_directory
 import os
-
-app = Flask(__name__)
 
 @app.route('/')
 def home():
@@ -44,5 +43,5 @@ def serve_placeholder(filename):
     # For simplicity, serve a placeholder for all image requests
     return send_from_directory(os.path.join(app.root_path, 'static'), 'style.css')
 
-if __name__ == '__main__':
-    app.run(debug=True)
+#if __name__ == '__main__':
+#    app.run(debug=True)

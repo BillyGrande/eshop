@@ -1,0 +1,78 @@
+ESHOP PROJECT DEVELOPMENT STEPS
+
+1. PROJECT SETUP
+- Created the basic Flask application structure following Flask conventions:
+  - app.py: Main entry point containing routes and application logic
+  - templates/: Directory for HTML templates following Flask's Jinja2 templating system
+  - static/: Directory for CSS, JavaScript, and image files
+  - eshop/: Package directory for modular code organization
+
+2. HOMEPAGE DEVELOPMENT
+- Created a responsive homepage with the following sections:
+  - Header with navigation and user actions (search, cart, account)
+  - Hero section with a call-to-action button
+  - Product recommendations section that will display personalized recommendations
+  - Categories section to allow users to browse by product type
+  - Footer with site information and links
+
+3. DESIGN APPROACH
+- Used a clean, modern design with a blue color scheme
+- Implemented responsive design using CSS Grid and Flexbox for optimal viewing on all devices
+- Applied KISS (Keep It Simple, Stupid) by:
+  - Using semantic HTML5 elements for better structure and accessibility
+  - Creating a straightforward user interface without unnecessary complexity
+  - Focusing on core functionality (product display) without feature bloat
+- Applied DRY (Don't Repeat Yourself) by:
+  - Using reusable CSS classes (.container, .btn, etc.)
+  - Creating consistent patterns for product cards and category cards
+  - Implementing responsive design once with media queries
+
+4. FLASK INTEGRATION
+- Set up Flask routes to render the homepage
+- Created a mock data structure for product recommendations that will be replaced with actual recommendation engine later
+- Used Jinja2 templates to dynamically generate product cards from the data
+- Configured static file serving for CSS and images
+
+5. NEXT STEPS (TO BE IMPLEMENTED)
+- Add backend functionality for user authentication
+- Implement product database and recommendation algorithm
+- Create product detail pages
+- Add shopping cart functionality
+- Implement checkout process
+
+6. UI IMPROVEMENTS (Commit: 2f975a7134e3fbb6d361cb3f32967d993c29aff4)
+- Fixed product card button alignment issues using flexbox layout
+- Implemented consistent card heights for better visual uniformity
+- Used best practices for CSS layout:
+  - Applied flexbox for vertical alignment and proper spacing
+  - Created nested flex containers for content organization
+  - Set fixed dimensions for consistent appearance across different content lengths
+  - Used margin-top: auto to push buttons to the bottom regardless of content
+  - Added dedicated product-content container for better structure
+- Enhanced responsive design to maintain alignment across all device sizes
+- Improved accessibility with better structure and semantic HTML
+
+7. PRODUCT CONTENT STRUCTURE IMPROVEMENTS (Commit: d9f659c9ae0bfc794d0e7dd9cc6f64a8c4ed5a31)
+- Enhanced product description and price alignment for consistent display
+- Applied DRY principles by:
+  - Creating a reusable product-content structure with fixed dimensions
+  - Using common CSS classes for text elements with shared properties
+  - Implementing standardized height values across all product cards
+- Applied KISS principles by:
+  - Simplifying the HTML structure with logical class naming
+  - Using flexbox to automatically handle spacing and alignment
+  - Setting consistent text truncation with line-clamping
+- Fixed specific dimensions for product titles, descriptions and prices
+- Added vertical alignment for price display
+- Improved overall product card consistency regardless of content length
+
+8. TITLE DISPLAY ENHANCEMENT (Commit: a03f167dd6bddfed5a6ceed2400af795ccde6397)
+- Fixed issue with long product titles being hidden or truncated
+- Improved title readability and display by:
+  - Replacing fixed pixel height with flexible em units for title element
+  - Increasing the line-clamp value from 2 to 3 lines for longer titles
+  - Adding proper line-height for better text spacing and readability
+  - Adjusting content area and card heights to accommodate longer titles
+- Added test data with longer product titles to verify the solution
+- Enhanced overall product card reliability with variable length content
+- Maintained consistent layout while allowing more flexibility for product titles
