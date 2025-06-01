@@ -25,5 +25,7 @@ markupsafe==3.0.2
     # via werkzeug
 python-dotenv==1.1.0
     # via eshop
+waitress==3.0.2
+    # via eshop
 werkzeug==3.1.3
     # via flask

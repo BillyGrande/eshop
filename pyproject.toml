@@ -8,6 +8,7 @@ authors = [
 dependencies = [
     "flask>=3.1.0",
     "python-dotenv>=1.1.0",
+    "waitress>=3.0.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -29,3 +30,6 @@ packages = ["src/eshop"]
 
 [tool.rye.scripts]
 devserver = "flask --app src/eshop run"
+prod = "waitress-serve --port=8000 --threads=4 eshop:app"
+hetz = "waitress-serve --port=8080 --threads=4 eshop:app"
+hetz2 = "waitress-serve --port=8080 --threads=4 eshop:app"
