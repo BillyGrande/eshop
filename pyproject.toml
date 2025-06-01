@@ -30,6 +30,5 @@ packages = ["src/eshop"]
 
 [tool.rye.scripts]
 devserver = "flask --app src/eshop run"
-prod = "waitress-serve --port=8000 --threads=4 eshop:app"
-hetz = "waitress-serve --port=8080 --threads=4 eshop:app"
-hetz2 = "waitress-serve --port=8080 --threads=4 eshop:app"
+dev = "waitress-serve --port=5000 --threads=4 eshop:app"
+prod = "waitress-serve --port=80 --threads=4 eshop:app"
