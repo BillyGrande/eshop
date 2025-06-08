@@ -17,4 +17,5 @@ jobs:
             systemctl stop eshop.service
             cd /root/eshop
             git pull
+            rye sync
             systemctl start eshop.service
