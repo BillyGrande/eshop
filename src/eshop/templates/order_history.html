@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History - E-Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .history-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .order-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .order-number {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .order-date {
+            color: #666;
+        }
+        .order-items {
+            margin: 15px 0;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .item-quantity {
+            color: #666;
+            font-size: 14px;
+        }
+        .order-total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #333;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .start-shopping {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .start-shopping:hover {
+            background: #0056b3;
+        }
+        .reorder-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reorder-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1><a href="{{ url_for('main.home') }}" style="color: white; text-decoration: none;">E-Shop</a></h1>
+            <div class="nav-links">
+                <a href="{{ url_for('main.home') }}">Home</a>
+                <a href="{{ url_for('cart.view_cart') }}">Cart</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.logout') }}">Logout ({{ current_user.email }})</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="history-container">
+        <h2>Order History</h2>
+        
+        {% if orders %}
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-number">Order #{{ order.id }}</div>
+                        <div class="order-date">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                    </div>
+                    <button class="reorder-btn" onclick="reorderItems({{ order.id }})">Reorder</button>
+                </div>
+                
+                <div class="order-items">
+                    {% for item in order.items %}
+                    <div class="order-item">
+                        <div class="item-details">
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-quantity">
+                                Quantity: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}
+                            </div>
+                        </div>
+                        <div>
+                            ${{ "%.2f"|format(item.price * item.quantity) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-total">
+                    Total: ${{ "%.2f"|format(order.total) }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-history">
+                <h3>No orders yet</h3>
+                <p>You haven't placed any orders. Start shopping to see your order history!</p>
+                <a href="{{ url_for('main.home') }}" class="start-shopping">Start Shopping</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function reorderItems(orderId) {
+            alert('Reorder functionality coming soon!');
+            // In a real implementation, this would add all items from the order to the cart
+        }
+    </script>
+</body>
+</html>

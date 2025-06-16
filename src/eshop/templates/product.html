@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - E-Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .product-detail {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .product-detail-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-images {
+            text-align: center;
+        }
+        .product-images img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .product-info {
+            padding: 20px;
+        }
+        .product-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .product-brand {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .product-price {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .price-original {
+            text-decoration: line-through;
+            color: #999;
+            margin-right: 15px;
+        }
+        .price-discounted {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .discount-info {
+            color: #27ae60;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        .stock-info {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .in-stock {
+            color: #27ae60;
+        }
+        .low-stock {
+            color: #f39c12;
+        }
+        .out-of-stock {
+            color: #e74c3c;
+        }
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .quantity-selector label {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .quantity-selector input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .add-to-cart-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .add-to-cart-btn:hover {
+            background: #218838;
+        }
+        .add-to-cart-btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .product-description {
+            margin-top: 30px;
+            line-height: 1.8;
+        }
+        .product-tags {
+            margin-top: 20px;
+        }
+        .tag {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 5px 15px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .similar-products {
+            margin-top: 60px;
+        }
+        .similar-products h2 {
+            margin-bottom: 30px;
+        }
+        .breadcrumb {
+            margin-bottom: 20px;
+        }
+        .breadcrumb a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1><a href="{{ url_for('main.home') }}" style="color: white; text-decoration: none;">E-Shop</a></h1>
+            <div class="nav-links">
+                <a href="{{ url_for('main.home') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.logout') }}">Logout ({{ current_user.email }})</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
+                {% endif %}
+                <a href="{{ url_for('cart.view_cart') }}" class="cart-link">
+                    Cart (<span id="cart-count">0</span>)
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="product-detail">
+        <div class="breadcrumb">
+            <a href="{{ url_for('main.home') }}">Home</a> / 
+            <a href="#">{{ product.category }}</a> / 
+            {{ product.name }}
+        </div>
+
+        <div class="product-detail-container">
+            <div class="product-images">
+                <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ product.name }}">
+            </div>
+
+            <div class="product-info">
+                <h1 class="product-title">{{ product.name }}</h1>
+                <p class="product-brand">Brand: {{ product.brand }}</p>
+                
+                <div class="product-price">
+                    {% if product.discount_percentage > 0 %}
+                        <span class="price-original">${{ "%.2f"|format(product.price) }}</span>
+                        <span class="price-discounted">${{ "%.2f"|format(product.get_discounted_price()) }}</span>
+                        <span class="discount-info">{{ product.discount_percentage }}% off</span>
+                    {% else %}
+                        <span>${{ "%.2f"|format(product.price) }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="stock-info">
+                    {% if product.stock_quantity == 0 %}
+                        <span class="out-of-stock">Out of Stock</span>
+                    {% elif product.stock_quantity < 10 %}
+                        <span class="low-stock">Only {{ product.stock_quantity }} left in stock!</span>
+                    {% else %}
+                        <span class="in-stock">In Stock</span>
+                    {% endif %}
+                </div>
+
+                {% if product.stock_quantity > 0 %}
+                <div class="quantity-selector">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" min="1" max="{{ product.stock_quantity }}" value="1">
+                </div>
+                {% endif %}
+
+                <button class="add-to-cart-btn" onclick="addToCart()" {% if product.stock_quantity == 0 %}disabled{% endif %}>
+                    {% if product.stock_quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                </button>
+
+                <div class="product-description">
+                    <h3>Description</h3>
+                    <p>{{ product.description }}</p>
+                </div>
+
+                {% if product.tags %}
+                <div class="product-tags">
+                    <h3>Tags</h3>
+                    {% for tag in product.get_tags_list() %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if similar_products %}
+        <div class="similar-products">
+            <h2>Similar Products</h2>
+            <div class="product-grid">
+                {% for similar in similar_products %}
+                <div class="product-card" onclick="window.location.href='/product/{{ similar.id }}'">
+                    <div class="product-image">
+                        <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ similar.name }}">
+                    </div>
+                    <div class="product-info">
+                        <h3>{{ similar.name }}</h3>
+                        <p>{{ similar.brand }}</p>
+                        <p class="price">
+                            {% if similar.discount_percentage > 0 %}
+                                <span style="text-decoration: line-through; color: #999;">${{ "%.2f"|format(similar.price) }}</span>
+                                <span style="color: #e74c3c; font-weight: bold;">${{ "%.2f"|format(similar.get_discounted_price()) }}</span>
+                            {% else %}
+                                ${{ "%.2f"|format(similar.price) }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Load cart count on page load
+        window.onload = function() {
+            updateCartCount();
+        };
+
+        function updateCartCount() {
+            fetch('/cart/count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cart-count').textContent = data.count;
+                });
+        }
+
+        function addToCart() {
+            const quantity = document.getElementById('quantity').value;
+            
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: {{ product.id }},
+                    quantity: parseInt(quantity)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    updateCartCount();
+                } else {
+                    alert(data.error || 'Error adding to cart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding to cart');
+            });
+        }
+    </script>
+</body>
+</html>

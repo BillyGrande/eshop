@@ -1,11 +1,13 @@
-from eshop import app
-from flask import Flask, render_template, send_from_directory, jsonify, request
+from flask import Blueprint, render_template, send_from_directory, jsonify, request, current_app
 from flask_login import current_user, login_required
-from .models import db, Product, UserInteraction
+from .models import db, Product, UserInteraction, GuestInteraction
 from .recommender import Recommender
+from .session_manager import SessionManager
 import os
 
-@app.route('/')
+main = Blueprint('main', __name__)
+
+@main.route('/')
 def home():
     # Initialize sample products if database is empty
     if Product.query.count() == 0:
@@ -34,38 +36,40 @@ def home():
     
     return render_template('index.html', recommended_products=recommended_products)
 
-@app.route('/static/images/<path:filename>')
+@main.route('/static/images/<path:filename>')
 def serve_placeholder(filename):
     # For simplicity, serve a placeholder for all image requests
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'style.css')
+    return send_from_directory(os.path.join(current_app.root_path, 'static'), 'style.css')
 
-@app.route('/track', methods=['POST'])
+@main.route('/track', methods=['POST'])
 def track_interaction():
-    """Track user interactions with products"""
-    if not current_user.is_authenticated:
-        return jsonify({'status': 'ok'})
-    
+    """Track user/guest interactions with products"""
     data = request.get_json()
     product_id = data.get('product_id')
     interaction_type = data.get('type', 'view')
     
     if product_id:
-        interaction = UserInteraction(
-            user_id=current_user.id,
-            product_id=product_id,
-            interaction_type=interaction_type
-        )
-        db.session.add(interaction)
-        db.session.commit()
+        if current_user.is_authenticated:
+            # Track for authenticated user
+            interaction = UserInteraction(
+                user_id=current_user.id,
+                product_id=product_id,
+                interaction_type=interaction_type
+            )
+            db.session.add(interaction)
+            db.session.commit()
+        else:
+            # Track for guest user
+            SessionManager.track_guest_interaction(product_id, interaction_type)
     
     return jsonify({'status': 'ok'})
 
-@app.route('/product/<int:product_id>')
+@main.route('/product/<int:product_id>')
 def product_detail(product_id):
     """Show product details and track view"""
     product = Product.query.get_or_404(product_id)
     
-    # Track view if user is authenticated
+    # Track view for both guests and authenticated users
     if current_user.is_authenticated:
         interaction = UserInteraction(
             user_id=current_user.id,
@@ -74,6 +78,8 @@ def product_detail(product_id):
         )
         db.session.add(interaction)
         db.session.commit()
+    else:
+        SessionManager.track_guest_interaction(product_id, 'view')
     
     # Get similar products
     similar_products = Recommender.get_similar_products(product_id, limit=4)

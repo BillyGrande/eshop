@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - E-Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        .checkout-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .item-info {
+            flex: 1;
+        }
+        .item-quantity {
+            color: #666;
+            font-size: 14px;
+        }
+        .order-summary {
+            position: sticky;
+            top: 20px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        .summary-total {
+            font-size: 20px;
+            font-weight: bold;
+            border-top: 2px solid #333;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .checkout-form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .place-order-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .place-order-btn:hover {
+            background: #218838;
+        }
+        .place-order-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .back-to-cart {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-to-cart:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1><a href="{{ url_for('main.home') }}" style="color: white; text-decoration: none;">E-Shop</a></h1>
+            <div class="nav-links">
+                <a href="{{ url_for('main.home') }}">Home</a>
+                <a href="{{ url_for('checkout.order_history') }}">My Orders</a>
+                <a href="{{ url_for('auth.logout') }}">Logout ({{ current_user.email }})</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="checkout-container">
+        <a href="{{ url_for('cart.view_cart') }}" class="back-to-cart">← Back to Cart</a>
+        
+        <h2>Checkout</h2>
+        
+        <div class="checkout-grid">
+            <div class="checkout-section">
+                <h3>Shipping Information</h3>
+                <form class="checkout-form" id="checkout-form">
+                    <div class="form-group">
+                        <label for="fullname">Full Name</label>
+                        <input type="text" id="fullname" name="fullname" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address">Street Address</label>
+                        <input type="text" id="address" name="address" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="zipcode">ZIP Code</label>
+                        <input type="text" id="zipcode" name="zipcode" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <select id="country" name="country" required>
+                            <option value="">Select Country</option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="checkout-section order-summary">
+                <h3>Order Summary</h3>
+                
+                {% for item in cart_items %}
+                <div class="order-item">
+                    <div class="item-info">
+                        <strong>{{ item.product.name }}</strong>
+                        <div class="item-quantity">Qty: {{ item.quantity }}</div>
+                        {% if item.product.discount_percentage > 0 %}
+                            <small style="color: #27ae60;">{{ item.product.discount_percentage }}% off applied</small>
+                        {% endif %}
+                    </div>
+                    <div>
+                        ${{ "%.2f"|format(item.get_subtotal()) }}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>${{ "%.2f"|format(total) }}</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>Shipping:</span>
+                    <span>FREE</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>Tax:</span>
+                    <span>$0.00</span>
+                </div>
+                
+                <div class="summary-row summary-total">
+                    <span>Total:</span>
+                    <span>${{ "%.2f"|format(total) }}</span>
+                </div>
+                
+                <button class="place-order-btn" onclick="placeOrder()">Place Order</button>
+                
+                <div class="loading" id="loading">
+                    <p>Processing your order...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function placeOrder() {
+            const form = document.getElementById('checkout-form');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const button = document.querySelector('.place-order-btn');
+            const loading = document.getElementById('loading');
+            
+            button.disabled = true;
+            loading.style.display = 'block';
+            
+            fetch('/checkout/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.error || 'Error processing order');
+                    button.disabled = false;
+                    loading.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing order. Please try again.');
+                button.disabled = false;
+                loading.style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
