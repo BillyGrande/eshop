@@ -107,3 +107,38 @@ class CartItem(db.Model):
     def get_subtotal(self):
         """Calculate subtotal for this cart item"""
         return self.product.get_discounted_price() * self.quantity
+
+class BestSeller(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    category = db.Column(db.String(50), nullable=True, index=True)  # NULL for overall, category for category-specific
+    time_window = db.Column(db.String(20), nullable=False)  # '7d', '30d', '90d', 'all'
+    sales_count = db.Column(db.Integer, default=0)
+    revenue = db.Column(db.Float, default=0.0)
+    rank = db.Column(db.Integer)
+    last_calculated = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    product = db.relationship('Product', backref='best_seller_entries')
+    
+    __table_args__ = (
+        db.UniqueConstraint('product_id', 'category', 'time_window', name='_product_category_window_uc'),
+        db.Index('idx_bestseller_lookup', 'time_window', 'category', 'rank'),
+    )
+
+class TrendingProduct(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    category = db.Column(db.String(50), nullable=True, index=True)  # NULL for overall, category for category-specific
+    trending_score = db.Column(db.Float, default=0.0)
+    view_velocity = db.Column(db.Float, default=0.0)  # views per hour
+    purchase_velocity = db.Column(db.Float, default=0.0)  # purchases per hour
+    cart_velocity = db.Column(db.Float, default=0.0)  # cart additions per hour
+    rank = db.Column(db.Integer)
+    last_calculated = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    product = db.relationship('Product', backref='trending_entries')
+    
+    __table_args__ = (
+        db.UniqueConstraint('product_id', 'category', name='_product_category_trending_uc'),
+        db.Index('idx_trending_lookup', 'category', 'rank'),
+    )

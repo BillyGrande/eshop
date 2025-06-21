@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, send_from_directory, jsonify, request, current_app
 from flask_login import current_user, login_required
-from .models import db, Product, UserInteraction, GuestInteraction
+from .models import db, Product, UserInteraction, GuestInteraction, BestSeller, TrendingProduct
 from .recommender import Recommender
 from .session_manager import SessionManager
 import os
@@ -32,7 +32,12 @@ def home():
     if current_user.is_authenticated:
         recommended_products = Recommender.get_recommendations_for_user(current_user.id)
     else:
-        recommended_products = Recommender.get_popular_products(4)
+        # Get session ID for guest recommendations
+        session_id = SessionManager.get_or_create_session_id()
+        recommended_products = Recommender.get_recommendations_for_guest(session_id, limit=4)
+    
+    # Log recommendation count for debugging
+    print(f"[DEBUG] Returning {len(recommended_products)} recommendations for {'user' if current_user.is_authenticated else 'guest'}")
     
     return render_template('index.html', recommended_products=recommended_products)
 
@@ -85,3 +90,55 @@ def product_detail(product_id):
     similar_products = Recommender.get_similar_products(product_id, limit=4)
     
     return render_template('product.html', product=product, similar_products=similar_products)
+
+@main.route('/debug/recommendations')
+def debug_recommendations():
+    """Debug endpoint to check recommendation system"""
+    from .session_manager import SessionManager
+    from .analytics import AnalyticsEngine
+    
+    session_id = SessionManager.get_or_create_session_id()
+    
+    # Get interaction count for current session
+    if current_user.is_authenticated:
+        user_type = "authenticated"
+        user_id = current_user.id
+        interaction_count = UserInteraction.query.filter_by(user_id=user_id).count()
+    else:
+        user_type = "guest"
+        user_id = session_id
+        interaction_count = GuestInteraction.query.filter_by(session_id=session_id).count()
+    
+    # Get recommendations
+    if current_user.is_authenticated:
+        recommendations = Recommender.get_recommendations_for_user(current_user.id)
+    else:
+        recommendations = Recommender.get_recommendations_for_guest(session_id, limit=4)
+    
+    # Get analytics data
+    best_sellers = AnalyticsEngine.get_best_sellers(time_window='30d', limit=5)
+    trending = AnalyticsEngine.get_trending_products(limit=5)
+    
+    debug_info = {
+        'user_type': user_type,
+        'user_id': user_id,
+        'interaction_count': interaction_count,
+        'recommendations_count': len(recommendations),
+        'recommendations': [
+            {
+                'id': r.id,
+                'name': r.name,
+                'category': r.category,
+                'price': float(r.price)
+            } for r in recommendations
+        ],
+        'best_sellers_count': len(best_sellers),
+        'trending_count': len(trending),
+        'total_products': Product.query.count(),
+        'analytics_status': {
+            'best_sellers_cached': BestSeller.query.filter_by(category=None).count(),
+            'trending_cached': TrendingProduct.query.filter_by(category=None).count()
+        }
+    }
+    
+    return jsonify(debug_info)
