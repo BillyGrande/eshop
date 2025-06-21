@@ -30,7 +30,7 @@ def home():
     
     # Get personalized recommendations
     if current_user.is_authenticated:
-        recommended_products = Recommender.get_recommendations_for_user(current_user.id)
+        recommended_products = Recommender.get_recommendations_for_user(current_user.id, limit=4)
     else:
         # Get session ID for guest recommendations
         session_id = SessionManager.get_or_create_session_id()
@@ -111,7 +111,7 @@ def debug_recommendations():
     
     # Get recommendations
     if current_user.is_authenticated:
-        recommendations = Recommender.get_recommendations_for_user(current_user.id)
+        recommendations = Recommender.get_recommendations_for_user(current_user.id, limit=4)
     else:
         recommendations = Recommender.get_recommendations_for_guest(session_id, limit=4)
     

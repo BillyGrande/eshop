@@ -7,6 +7,13 @@ import random
 
 class Recommender:
     @staticmethod
+    def _apply_recommendation_discount(products):
+        """Apply 10% discount to all recommended products"""
+        for product in products:
+            product.discount_percentage = 10.0
+        return products
+    
+    @staticmethod
     def get_popular_products(limit=10):
         """Get most popular products based on all interactions"""
         popular = db.session.query(
@@ -23,7 +30,7 @@ class Recommender:
         return [product for product, _ in popular]
     
     @staticmethod
-    def get_recommendations_for_guest(session_id, limit=10):
+    def get_recommendations_for_guest(session_id, limit=4):
         """Get recommendations for guest users based on session interactions"""
         # Count guest interactions
         interaction_count = GuestInteraction.query.filter_by(session_id=session_id).count()
@@ -50,7 +57,7 @@ class Recommender:
                     if product.id not in existing_ids and len(recommendations) < limit:
                         recommendations.append(product)
             
-            return recommendations[:limit]
+            return Recommender._apply_recommendation_discount(recommendations[:limit])
         else:
             # After 3+ interactions: 50% cold start + 25% best sellers + 25% trending
             cold_start_limit = (limit + 1) // 2
@@ -81,7 +88,7 @@ class Recommender:
                     if product.id not in existing_ids and len(unique_recommendations) < limit:
                         unique_recommendations.append(product)
             
-            return unique_recommendations[:limit]
+            return Recommender._apply_recommendation_discount(unique_recommendations[:limit])
     
     @staticmethod
     def _cold_start_for_guest(session_id, limit=5):
@@ -142,14 +149,15 @@ class Recommender:
         return recommendations[:limit]
     
     @staticmethod
-    def get_recommendations_for_user(user_id, limit=10):
+    def get_recommendations_for_user(user_id, limit=4):
         """Get personalized recommendations for a user"""
         # Check if user has enough interactions
         interaction_count = UserInteraction.query.filter_by(user_id=user_id).count()
         
         if interaction_count < 5:
             # Fall back to popular products for new users
-            return Recommender.get_popular_products(limit)
+            popular = Recommender.get_popular_products(limit)
+            return Recommender._apply_recommendation_discount(popular)
         
         # Get products the user has interacted with
         user_products = db.session.query(UserInteraction.product_id).filter_by(
@@ -181,7 +189,8 @@ class Recommender:
             func.count(UserInteraction.id).desc()
         ).limit(limit).all()
         
-        return [product for product, _ in recommendations]
+        products = [product for product, _ in recommendations]
+        return Recommender._apply_recommendation_discount(products)
     
     @staticmethod
     def get_similar_products(product_id, limit=5):

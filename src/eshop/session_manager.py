@@ -1,7 +1,7 @@
 import uuid
 from flask import session
 from datetime import datetime, timezone
-from .models import db, GuestInteraction, Cart
+from .models import db, GuestInteraction, Cart, UserInteraction
 
 class SessionManager:
     """Manages guest sessions and transitions to authenticated users"""
@@ -70,7 +70,6 @@ class SessionManager:
             
             if not existing:
                 # Convert guest interaction to user interaction
-                from .models import UserInteraction
                 user_interaction = UserInteraction(
                     user_id=user_id,
                     product_id=gi.product_id,
