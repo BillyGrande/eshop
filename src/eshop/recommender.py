@@ -149,48 +149,76 @@ class Recommender:
         return recommendations[:limit]
     
     @staticmethod
+    def get_cold_start_recommendations(user_id, limit=4):
+        """Get recommendations for users with minimal data using cold start algorithm"""
+        # Get user interactions
+        interactions = UserInteraction.query.filter_by(user_id=user_id).all()
+        
+        if not interactions:
+            return []
+        
+        # Extract patterns from interactions
+        category_counts = defaultdict(int)
+        viewed_products = set()
+        price_points = []
+        
+        for interaction in interactions:
+            product = interaction.product
+            category_counts[product.category] += 1
+            viewed_products.add(product.id)
+            if interaction.interaction_type in ['click', 'add_to_cart', 'purchase']:
+                price_points.append(product.price)
+        
+        # Find preferred categories
+        preferred_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        preferred_categories = [cat for cat, _ in preferred_categories]
+        
+        # Calculate price range preference
+        if price_points:
+            avg_price = sum(price_points) / len(price_points)
+            price_min = avg_price * 0.7
+            price_max = avg_price * 1.3
+        else:
+            price_min = 0
+            price_max = float('inf')
+        
+        # Find products in preferred categories and price range
+        recommendations = Product.query.filter(
+            and_(
+                Product.category.in_(preferred_categories),
+                Product.price >= price_min,
+                Product.price <= price_max,
+                ~Product.id.in_(viewed_products),
+                Product.stock_quantity > 0
+            )
+        ).order_by(func.random()).limit(limit * 2).all()
+        
+        # If not enough, expand search
+        if len(recommendations) < limit:
+            additional = Product.query.filter(
+                and_(
+                    Product.price >= price_min,
+                    Product.price <= price_max,
+                    ~Product.id.in_(viewed_products),
+                    ~Product.id.in_([r.id for r in recommendations]),
+                    Product.stock_quantity > 0
+                )
+            ).order_by(func.random()).limit(limit - len(recommendations)).all()
+            recommendations.extend(additional)
+        
+        return Recommender._apply_recommendation_discount(recommendations[:limit])
+    
+    @staticmethod
     def get_recommendations_for_user(user_id, limit=4):
-        """Get personalized recommendations for a user"""
-        # Check if user has enough interactions
-        interaction_count = UserInteraction.query.filter_by(user_id=user_id).count()
+        """Get personalized recommendations for a user using hybrid approach"""
+        from .hybrid_recommender import HybridRecommender
         
-        if interaction_count < 5:
-            # Fall back to popular products for new users
-            popular = Recommender.get_popular_products(limit)
-            return Recommender._apply_recommendation_discount(popular)
+        # Use hybrid recommender for authenticated users
+        hybrid = HybridRecommender()
+        recommendations = hybrid.get_recommendations(user_id, limit=limit)
         
-        # Get products the user has interacted with
-        user_products = db.session.query(UserInteraction.product_id).filter_by(
-            user_id=user_id
-        ).subquery()
-        
-        # Find other users who bought the same products
-        similar_users = db.session.query(
-            UserInteraction.user_id
-        ).filter(
-            UserInteraction.product_id.in_(user_products),
-            UserInteraction.user_id != user_id,
-            UserInteraction.interaction_type == 'purchase'
-        ).distinct().subquery()
-        
-        # Get products those similar users bought
-        recommendations = db.session.query(
-            Product,
-            func.count(UserInteraction.id).label('score')
-        ).join(
-            UserInteraction
-        ).filter(
-            UserInteraction.user_id.in_(similar_users),
-            UserInteraction.interaction_type == 'purchase',
-            ~Product.id.in_(user_products)
-        ).group_by(
-            Product.id
-        ).order_by(
-            func.count(UserInteraction.id).desc()
-        ).limit(limit).all()
-        
-        products = [product for product, _ in recommendations]
-        return Recommender._apply_recommendation_discount(products)
+        # Apply discount to recommendations
+        return Recommender._apply_recommendation_discount(recommendations)
     
     @staticmethod
     def get_similar_products(product_id, limit=5):

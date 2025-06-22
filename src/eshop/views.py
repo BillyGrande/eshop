@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from .models import db, Product, UserInteraction, GuestInteraction, BestSeller, TrendingProduct
 from .recommender import Recommender
 from .session_manager import SessionManager
+from .offers import OfferGenerator
 import os
 
 main = Blueprint('main', __name__)
@@ -29,17 +30,65 @@ def home():
         db.session.commit()
     
     # Get personalized recommendations
+    personalized_offers = []
+    
     if current_user.is_authenticated:
-        recommended_products = Recommender.get_recommendations_for_user(current_user.id, limit=4)
+        # Get recommendations for authenticated users
+        recommended_products = Recommender.get_recommendations_for_user(current_user.id, limit=8)
+        
+        # Get or generate personalized offers
+        offer_generator = OfferGenerator()
+        active_offers = offer_generator.refresh_user_offers(current_user.id, num_offers=4)
+        
+        # Create a set of product IDs with active offers
+        offer_product_ids = {offer.product_id for offer in active_offers}
+        
+        # Prioritize products with offers in recommendations
+        products_with_offers = []
+        products_without_offers = []
+        
+        for product in recommended_products:
+            if product.id in offer_product_ids:
+                # Find the corresponding offer
+                offer = next((o for o in active_offers if o.product_id == product.id), None)
+                if offer:
+                    products_with_offers.append({
+                        'product': product,
+                        'has_offer': True,
+                        'offer': offer,
+                        'final_price': offer_generator.apply_offer_to_product_price(product, current_user.id)[0]
+                    })
+            else:
+                products_without_offers.append({
+                    'product': product,
+                    'has_offer': False,
+                    'offer': None,
+                    'final_price': product.get_discounted_price()
+                })
+        
+        # Combine offers first, then other recommendations
+        personalized_offers = (products_with_offers + products_without_offers)[:4]
+        
     else:
         # Get session ID for guest recommendations
         session_id = SessionManager.get_or_create_session_id()
         recommended_products = Recommender.get_recommendations_for_guest(session_id, limit=4)
+        
+        # For guests, no personalized offers
+        personalized_offers = [
+            {
+                'product': product,
+                'has_offer': False,
+                'offer': None,
+                'final_price': product.get_discounted_price()
+            }
+            for product in recommended_products
+        ]
     
     # Log recommendation count for debugging
-    print(f"[DEBUG] Returning {len(recommended_products)} recommendations for {'user' if current_user.is_authenticated else 'guest'}")
+    print(f"[DEBUG] Returning {len(personalized_offers)} recommendations for {'user' if current_user.is_authenticated else 'guest'}")
     
-    return render_template('index.html', recommended_products=recommended_products)
+    return render_template('index.html', personalized_offers=personalized_offers)
 
 @main.route('/static/images/<path:filename>')
 def serve_placeholder(filename):

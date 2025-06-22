@@ -35,6 +35,8 @@ flask-sqlalchemy==3.1.1
     # via flask-migrate
 greenlet==3.2.2
     # via sqlalchemy
+iniconfig==2.1.0
+    # via pytest
 itsdangerous==2.2.0
     # via flask
 jinja2==3.1.6
@@ -52,8 +54,17 @@ numpy==2.2.6
     # via pandas
     # via scikit-learn
     # via scipy
+packaging==25.0
+    # via pytest
 pandas==2.2.3
     # via eshop
+pluggy==1.6.0
+    # via pytest
+pygments==2.19.2
+    # via pytest
+pytest==8.4.1
+    # via pytest-mock
+pytest-mock==3.14.1
 python-dateutil==2.9.0.post0
     # via pandas
 python-dotenv==1.1.0

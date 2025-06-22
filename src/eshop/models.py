@@ -142,3 +142,35 @@ class TrendingProduct(db.Model):
         db.UniqueConstraint('product_id', 'category', name='_product_category_trending_uc'),
         db.Index('idx_trending_lookup', 'category', 'rank'),
     )
+
+class PersonalizedOffer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    discount_percentage = db.Column(db.Float, default=10.0)  # Default 10% discount
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    is_used = db.Column(db.Boolean, default=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=True)
+    
+    # Relationships
+    user = db.relationship('User', backref='personalized_offers')
+    product = db.relationship('Product', backref='personalized_offers')
+    order = db.relationship('Order', backref='personalized_offers')
+    
+    # Constraints to ensure one offer per product per user
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'product_id', name='_user_product_offer_uc'),
+        db.Index('idx_offer_user_active', 'user_id', 'is_used', 'expires_at'),
+    )
+    
+    def is_valid(self):
+        """Check if offer is still valid (not used and not expired)"""
+        return not self.is_used and datetime.utcnow() < self.expires_at
+    
+    def apply_to_order(self, order_id):
+        """Mark offer as used when applied to an order"""
+        self.is_used = True
+        self.used_at = datetime.utcnow()
+        self.order_id = order_id

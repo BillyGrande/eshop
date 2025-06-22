@@ -36,6 +36,28 @@
             border-radius: 20px;
             font-size: 14px;
         }
+        .offer-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff6b35;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .personalized-offer {
+            background: #fff3cd;
+            border: 2px solid #ff6b35;
+            padding: 5px 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #856404;
+            font-weight: bold;
+        }
         .out-of-stock {
             opacity: 0.6;
         }
@@ -98,35 +120,45 @@
         <div class="container">
             <h2>Recommended For You</h2>
             <div class="product-grid">
-                {% for product in recommended_products %}
-                <div class="product-card {% if product.stock_quantity == 0 %}out-of-stock{% endif %}" onclick="viewProduct({{ product.id }})">
-                    {% if product.discount_percentage > 0 %}
-                        <div class="discount-badge">{{ product.discount_percentage }}% OFF</div>
+                {% for item in personalized_offers %}
+                <div class="product-card {% if item.product.stock_quantity == 0 %}out-of-stock{% endif %}" onclick="viewProduct({{ item.product.id }})">
+                    {% if item.has_offer %}
+                        <div class="offer-badge">🎁 {{ item.offer.discount_percentage }}% FOR YOU!</div>
+                    {% endif %}
+                    {% if item.product.discount_percentage > 0 %}
+                        <div class="discount-badge">{{ item.product.discount_percentage }}% OFF</div>
                     {% endif %}
                     <div class="product-image">
-                        <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ product.name }}">
+                        <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ item.product.name }}">
                     </div>
                     <div class="product-info">
                         <div class="product-content">
-                            <h3 class="product-text">{{ product.name }}</h3>
-                            <p class="product-text" style="color: #666; font-size: 14px;">{{ product.brand }} - {{ product.category }}</p>
-                            <p class="product-description product-text">{{ product.description[:100] }}...</p>
+                            <h3 class="product-text">{{ item.product.name }}</h3>
+                            <p class="product-text" style="color: #666; font-size: 14px;">{{ item.product.brand }} - {{ item.product.category }}</p>
+                            <p class="product-description product-text">{{ item.product.description[:100] }}...</p>
+                            
+                            {% if item.has_offer %}
+                                <div class="personalized-offer">
+                                    🎁 Exclusive {{ item.offer.discount_percentage }}% discount just for you!
+                                </div>
+                            {% endif %}
+                            
                             <div class="product-price">
-                                {% if product.discount_percentage > 0 %}
-                                    <span class="price-original">${{ "%.2f"|format(product.price) }}</span>
-                                    <span class="price-discounted">${{ "%.2f"|format(product.get_discounted_price()) }}</span>
+                                {% if item.has_offer or item.product.discount_percentage > 0 %}
+                                    <span class="price-original">${{ "%.2f"|format(item.product.price) }}</span>
+                                    <span class="price-discounted">${{ "%.2f"|format(item.final_price) }}</span>
                                 {% else %}
-                                    <span>${{ "%.2f"|format(product.price) }}</span>
+                                    <span>${{ "%.2f"|format(item.product.price) }}</span>
                                 {% endif %}
                             </div>
-                            {% if product.stock_quantity == 0 %}
+                            {% if item.product.stock_quantity == 0 %}
                                 <p style="color: #e74c3c; font-weight: bold;">Out of Stock</p>
-                            {% elif product.stock_quantity < 10 %}
-                                <p style="color: #f39c12; font-size: 14px;">Only {{ product.stock_quantity }} left!</p>
+                            {% elif item.product.stock_quantity < 10 %}
+                                <p style="color: #f39c12; font-size: 14px;">Only {{ item.product.stock_quantity }} left!</p>
                             {% endif %}
                         </div>
-                        <button class="add-to-cart" onclick="event.stopPropagation(); addToCart({{ product.id }})" {% if product.stock_quantity == 0 %}disabled{% endif %}>
-                            {% if product.stock_quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                        <button class="add-to-cart" onclick="event.stopPropagation(); addToCart({{ item.product.id }})" {% if item.product.stock_quantity == 0 %}disabled{% endif %}>
+                            {% if item.product.stock_quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
                         </button>
                     </div>
                 </div>

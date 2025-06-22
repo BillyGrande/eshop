@@ -175,17 +175,20 @@
             <div class="checkout-section order-summary">
                 <h3>Order Summary</h3>
                 
-                {% for item in cart_items %}
+                {% for cart_item in cart_items %}
                 <div class="order-item">
                     <div class="item-info">
-                        <strong>{{ item.product.name }}</strong>
-                        <div class="item-quantity">Qty: {{ item.quantity }}</div>
-                        {% if item.product.discount_percentage > 0 %}
-                            <small style="color: #27ae60;">{{ item.product.discount_percentage }}% off applied</small>
+                        <strong>{{ cart_item.item.product.name }}</strong>
+                        <div class="item-quantity">Qty: {{ cart_item.item.quantity }}</div>
+                        {% if cart_item.item.product.discount_percentage > 0 %}
+                            <small style="color: #27ae60;">{{ cart_item.item.product.discount_percentage }}% product discount</small>
+                        {% endif %}
+                        {% if cart_item.has_offer %}
+                            <small style="color: #e74c3c; font-weight: bold;">🎁 {{ cart_item.offer_discount }}% personalized offer applied!</small>
                         {% endif %}
                     </div>
                     <div>
-                        ${{ "%.2f"|format(item.get_subtotal()) }}
+                        ${{ "%.2f"|format(cart_item.subtotal) }}
                     </div>
                 </div>
                 {% endfor %}

@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
-from .models import db, Order, OrderItem, Product
+from .models import db, Order, OrderItem, Product, PersonalizedOffer
 from .session_manager import SessionManager
+from .offers import OfferGenerator
 
 checkout = Blueprint('checkout', __name__)
 
@@ -17,9 +18,31 @@ def checkout_page():
         return redirect(url_for('main.home'))
     
     cart_items = cart.items.all()
-    total = cart.get_total()
+    offer_generator = OfferGenerator()
     
-    return render_template('checkout.html', cart_items=cart_items, total=total)
+    # Calculate total with personalized offers
+    total = 0
+    items_with_offers = []
+    
+    for item in cart_items:
+        final_price, offer = offer_generator.apply_offer_to_product_price(
+            item.product,
+            current_user.id
+        )
+        subtotal = final_price * item.quantity
+        total += subtotal
+        
+        items_with_offers.append({
+            'item': item,
+            'final_price': final_price,
+            'subtotal': subtotal,
+            'has_offer': offer is not None,
+            'offer_discount': offer.discount_percentage if offer else 0
+        })
+    
+    return render_template('checkout.html', 
+                         cart_items=items_with_offers, 
+                         total=total)
 
 @checkout.route('/checkout/process', methods=['POST'])
 @login_required
@@ -47,15 +70,27 @@ def process_checkout():
     db.session.flush()  # Get order ID
     
     # Create order items and update stock
+    offer_generator = OfferGenerator()
+    
     for cart_item in cart.items:
+        # Check for personalized offers and apply them
+        final_price, offer = offer_generator.apply_offer_to_product_price(
+            cart_item.product, 
+            current_user.id
+        )
+        
         # Create order item
         order_item = OrderItem(
             order_id=order.id,
             product_id=cart_item.product_id,
             quantity=cart_item.quantity,
-            price=cart_item.product.get_discounted_price()
+            price=final_price  # Use the price with offer applied
         )
         db.session.add(order_item)
+        
+        # If an offer was applied, mark it as used
+        if offer:
+            offer.apply_to_order(order.id)
         
         # Update product stock
         cart_item.product.stock_quantity -= cart_item.quantity
