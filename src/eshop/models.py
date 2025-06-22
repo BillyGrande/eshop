@@ -5,10 +5,86 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Self-referential relationship
+    parent = db.relationship('Category', remote_side=[id], backref='children')
+    products = db.relationship('Product', backref='category_obj', lazy='dynamic')
+    
+    def is_main_category(self):
+        """Check if this is a main category (no parent)"""
+        return self.parent_id is None
+    
+    def get_path(self):
+        """Get the full path from root to this category"""
+        path = []
+        current = self
+        while current:
+            path.insert(0, current)
+            current = current.parent
+        return path
+    
+    def get_breadcrumb(self):
+        """Get breadcrumb string for display"""
+        path = self.get_path()
+        return " > ".join([cat.name for cat in path])
+    
+    def get_depth(self):
+        """Get the depth of this category in the hierarchy"""
+        depth = 0
+        current = self
+        while current.parent:
+            depth += 1
+            current = current.parent
+        return depth
+    
+    def validate_depth(self, max_depth=3):
+        """Validate that category depth doesn't exceed maximum"""
+        if self.parent_id:
+            # Calculate depth including this new category
+            parent = Category.query.get(self.parent_id)
+            if parent and parent.get_depth() >= max_depth - 1:
+                raise ValueError(f"Category depth cannot exceed maximum depth of {max_depth}")
+    
+    def get_all_products(self, include_subcategories=True):
+        """Get all products in this category and optionally its subcategories"""
+        if not include_subcategories:
+            return self.products.all()
+        
+        # Collect all descendant category IDs
+        category_ids = [self.id]
+        to_process = list(self.children)
+        
+        while to_process:
+            child = to_process.pop(0)
+            category_ids.append(child.id)
+            to_process.extend(child.children)
+        
+        # Get all products from these categories
+        return Product.query.filter(Product.category_id.in_(category_ids)).all()
+    
+    def get_product_count(self, include_subcategories=False):
+        """Get count of products in this category"""
+        if not include_subcategories:
+            return self.products.count()
+        return len(self.get_all_products(include_subcategories=True))
+    
+    @classmethod
+    def get_main_categories(cls):
+        """Get all main categories (no parent)"""
+        return cls.query.filter_by(parent_id=None).order_by(cls.name).all()
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(200))
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     orders = db.relationship('Order', backref='customer', lazy='dynamic')
@@ -24,7 +100,8 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(50), nullable=False, index=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
+    category = db.Column(db.String(50), nullable=True, index=True)  # Keep for backward compatibility during migration
     description = db.Column(db.Text)
     image = db.Column(db.String(200))
     brand = db.Column(db.String(50))

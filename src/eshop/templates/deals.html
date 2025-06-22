@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deals - EShop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .deals-hero {
+            background: linear-gradient(135deg, #e74c3c, #ff6b35);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .deals-hero h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .deals-hero p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .deals-section {
+            margin-bottom: 60px;
+        }
+        
+        .deals-section h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .deals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .deal-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .deal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .deal-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .deal-content {
+            padding: 20px;
+        }
+        
+        .deal-title {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #333;
+            min-height: 40px;
+        }
+        
+        .deal-original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        .deal-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 10px 0;
+        }
+        
+        .deal-savings {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .deal-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .personalized-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff6b35;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .limited-stock {
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .deal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-add-cart {
+            flex: 1;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        
+        .btn-add-cart:hover {
+            background: #2980b9;
+        }
+        
+        .btn-view-deal {
+            flex: 1;
+            background: #ecf0f1;
+            color: #333;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        
+        .btn-view-deal:hover {
+            background: #bdc3c7;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .cart-count-badge {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            position: relative;
+            top: -5px;
+            left: -5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>EShop</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                    <li><a href="{{ url_for('main.categories_list') }}">Categories</a></li>
+                    <li><a href="{{ url_for('main.deals') }}" class="active">Deals</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <a href="#" class="search-icon">🔍</a>
+                <a href="{{ url_for('cart.view_cart') }}" class="cart-icon">
+                    🛒<span id="cart-count-badge" class="cart-count-badge" style="display: none;">0</span>
+                </a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.logout') }}" class="account-icon" title="Logout">🚪</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="account-icon" title="Login">👤</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="deals-hero">
+        <div class="container">
+            <h1>🎉 Amazing Deals Just For You!</h1>
+            <p>Save big on your favorite products with our exclusive offers</p>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if current_user.is_authenticated and personalized_offers %}
+        <section class="deals-section">
+            <h2>🎁 Your Personalized Offers</h2>
+            <p style="color: #666; margin-bottom: 20px;">Exclusive discounts selected just for you!</p>
+            <div class="deals-grid">
+                {% for item in personalized_offers %}
+                <div class="deal-card" onclick="viewProduct({{ item.product.id }})">
+                    <div class="personalized-badge">🎁 FOR YOU!</div>
+                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" 
+                         alt="{{ item.product.name }}" class="deal-image">
+                    <div class="deal-content">
+                        <h3 class="deal-title">{{ item.product.name }}</h3>
+                        <p style="color: #666; font-size: 0.9em;">{{ item.product.brand }}</p>
+                        
+                        <div class="deal-savings">Save ${{ "%.2f"|format(item.savings) }}</div>
+                        
+                        <div>
+                            <span class="deal-original-price">${{ "%.2f"|format(item.product.price) }}</span>
+                            <div class="deal-price">${{ "%.2f"|format(item.final_price) }}</div>
+                        </div>
+                        
+                        <p style="color: #e74c3c; font-size: 0.9em; margin-top: 10px;">
+                            {{ item.offer.discount_percentage }}% exclusive discount!
+                        </p>
+                        
+                        <div class="deal-actions">
+                            <button class="btn-add-cart" onclick="event.stopPropagation(); addToCart({{ item.product.id }})">
+                                Add to Cart
+                            </button>
+                            <button class="btn-view-deal">View Deal</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if best_deals %}
+        <section class="deals-section">
+            <h2>🔥 Hot Deals</h2>
+            <p style="color: #666; margin-bottom: 20px;">Our best discounts across all categories</p>
+            <div class="deals-grid">
+                {% for product in best_deals %}
+                <div class="deal-card" onclick="viewProduct({{ product.id }})">
+                    <div class="deal-badge">{{ product.discount_percentage }}% OFF</div>
+                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" 
+                         alt="{{ product.name }}" class="deal-image">
+                    <div class="deal-content">
+                        <h3 class="deal-title">{{ product.name }}</h3>
+                        <p style="color: #666; font-size: 0.9em;">{{ product.brand }}</p>
+                        
+                        <div>
+                            <span class="deal-original-price">${{ "%.2f"|format(product.price) }}</span>
+                            <div class="deal-price">${{ "%.2f"|format(product.get_discounted_price()) }}</div>
+                        </div>
+                        
+                        {% if product.stock_quantity < 10 %}
+                        <div class="limited-stock">
+                            ⚠️ Only {{ product.stock_quantity }} left!
+                        </div>
+                        {% endif %}
+                        
+                        <div class="deal-actions">
+                            <button class="btn-add-cart" onclick="event.stopPropagation(); addToCart({{ product.id }})">
+                                Add to Cart
+                            </button>
+                            <button class="btn-view-deal">View Deal</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if trending_deals %}
+        <section class="deals-section">
+            <h2>📈 Trending Deals</h2>
+            <p style="color: #666; margin-bottom: 20px;">Popular products with special offers</p>
+            <div class="deals-grid">
+                {% for item in trending_deals %}
+                <div class="deal-card" onclick="viewProduct({{ item.product.id }})">
+                    {% if item.product.discount_percentage > 0 %}
+                    <div class="deal-badge">{{ item.product.discount_percentage }}% OFF</div>
+                    {% endif %}
+                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" 
+                         alt="{{ item.product.name }}" class="deal-image">
+                    <div class="deal-content">
+                        <h3 class="deal-title">{{ item.product.name }}</h3>
+                        <p style="color: #666; font-size: 0.9em;">{{ item.product.brand }}</p>
+                        
+                        {% if item.product.discount_percentage > 0 %}
+                        <div>
+                            <span class="deal-original-price">${{ "%.2f"|format(item.product.price) }}</span>
+                            <div class="deal-price">${{ "%.2f"|format(item.final_price) }}</div>
+                        </div>
+                        {% else %}
+                        <div class="deal-price">${{ "%.2f"|format(item.product.price) }}</div>
+                        {% endif %}
+                        
+                        {% if item.is_limited_stock %}
+                        <div class="limited-stock">
+                            🔥 High demand - Limited stock!
+                        </div>
+                        {% endif %}
+                        
+                        <div class="deal-actions">
+                            <button class="btn-add-cart" onclick="event.stopPropagation(); addToCart({{ item.product.id }})">
+                                Add to Cart
+                            </button>
+                            <button class="btn-view-deal">View Deal</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if not personalized_offers and not best_deals and not trending_deals %}
+        <div class="empty-state">
+            <h3>No deals available at the moment</h3>
+            <p>Check back soon for amazing offers!</p>
+            <a href="{{ url_for('main.home') }}" class="btn" style="margin-top: 20px; display: inline-block;">
+                Continue Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About EShop</h3>
+                    <p>Your trusted online shopping destination for all your needs.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Customer Service</h3>
+                    <ul>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                        <li><a href="{{ url_for('main.categories_list') }}">Categories</a></li>
+                        <li><a href="{{ url_for('main.deals') }}">Deals</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 EShop. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function viewProduct(productId) {
+            window.location.href = `/product/${productId}`;
+        }
+
+        function addToCart(productId) {
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                    // Show success message
+                    alert('Product added to cart!');
+                } else {
+                    alert(data.message || 'Failed to add product to cart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+
+        function updateCartCount() {
+            fetch('/cart/count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('cart-count-badge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error updating cart count:', error));
+        }
+
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', updateCartCount);
+    </script>
+</body>
+</html>

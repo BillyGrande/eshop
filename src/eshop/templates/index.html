@@ -85,9 +85,9 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="/" class="active">Home</a></li>
-                    <li><a href="#">Categories</a></li>
-                    <li><a href="#">Deals</a></li>
+                    <li><a href="{{ url_for('main.home') }}" class="active">Home</a></li>
+                    <li><a href="{{ url_for('main.categories_list') }}">Categories</a></li>
+                    <li><a href="{{ url_for('main.deals') }}">Deals</a></li>
                     <li><a href="#">About</a></li>
                     <li><a href="#">Contact</a></li>
                 </ul>
@@ -121,7 +121,7 @@
             <h2>Recommended For You</h2>
             <div class="product-grid">
                 {% for item in personalized_offers %}
-                <div class="product-card {% if item.product.stock_quantity == 0 %}out-of-stock{% endif %}" onclick="viewProduct({{ item.product.id }})">
+                <div class="product-card {% if item.product.stock_quantity == 0 %}out-of-stock{% endif %}" onclick="viewProduct({{ item.product.id }}, {% if not item.has_offer and item.product.discount_percentage > 0 %}{{ item.product.discount_percentage }}{% else %}0{% endif %})">
                     {% if item.has_offer %}
                         <div class="offer-badge">🎁 {{ item.offer.discount_percentage }}% FOR YOU!</div>
                     {% endif %}
@@ -171,22 +171,13 @@
         <div class="container">
             <h2>Shop by Category</h2>
             <div class="category-grid">
-                <div class="category-card">
-                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="Electronics">
-                    <h3>Electronics</h3>
-                </div>
-                <div class="category-card">
-                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="Clothing">
-                    <h3>Clothing</h3>
-                </div>
-                <div class="category-card">
-                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="Home & Garden">
-                    <h3>Home & Garden</h3>
-                </div>
-                <div class="category-card">
-                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="Sports & Outdoors">
-                    <h3>Sports & Outdoors</h3>
-                </div>
+                {% for category in main_categories[:4] %}
+                <a href="{{ url_for('main.category_view', slug=category.slug) }}" class="category-card" style="text-decoration: none; color: inherit;">
+                    <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ category.name }}">
+                    <h3>{{ category.name }}</h3>
+                    <p style="font-size: 0.9em; color: #666;">{{ category.get_product_count(include_subcategories=True) }} products</p>
+                </a>
+                {% endfor %}
             </div>
         </div>
     </section>
@@ -279,8 +270,12 @@
             });
         }
 
-        function viewProduct(productId) {
-            window.location.href = '/product/' + productId;
+        function viewProduct(productId, recommendationDiscount) {
+            if (recommendationDiscount && recommendationDiscount > 0) {
+                window.location.href = '/product/' + productId + '?rec_discount=' + recommendationDiscount;
+            } else {
+                window.location.href = '/product/' + productId;
+            }
         }
 
         function trackInteraction(productId, type) {

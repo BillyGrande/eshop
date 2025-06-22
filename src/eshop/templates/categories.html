@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Categories - E-Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .categories-container {
+            padding: 40px 0;
+        }
+        .categories-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .categories-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .main-category {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+        .main-category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .main-category h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .main-category h2 a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .main-category h2 a:hover {
+            color: #007bff;
+        }
+        .product-count {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .subcategories-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .subcategories-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .subcategories-list li:last-child {
+            border-bottom: none;
+        }
+        .subcategories-list a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.3s ease;
+        }
+        .subcategories-list a:hover {
+            color: #007bff;
+        }
+        .subcategory-count {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .view-all-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1><a href="{{ url_for('main.home') }}" style="text-decoration: none; color: inherit;">E-Shop</a></h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search for products...">
+                    <button type="submit">Search</button>
+                </div>
+                <div class="header-actions">
+                    {% if current_user.is_authenticated %}
+                        <span>Welcome, {{ current_user.email }}</span>
+                        <a href="{{ url_for('cart.view_cart') }}">Cart</a>
+                        <a href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}">Login</a>
+                        <a href="{{ url_for('auth.register') }}">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                    <li><a href="{{ url_for('main.categories_list') }}" class="active">Categories</a></li>
+                    <li><a href="{{ url_for('main.deals') }}">Deals</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container categories-container">
+        <div class="categories-header">
+            <h1>All Categories</h1>
+            <p>Browse our complete selection of products</p>
+        </div>
+
+        <div class="categories-grid">
+            {% for item in category_tree %}
+            <div class="main-category">
+                <h2><a href="{{ url_for('main.category_view', slug=item.category.slug) }}">{{ item.category.name }}</a></h2>
+                <p class="product-count">{{ item.product_count }} total products</p>
+                
+                {% if item.subcategories %}
+                <ul class="subcategories-list">
+                    {% for subcat_item in item.subcategories %}
+                    <li>
+                        <a href="{{ url_for('main.category_view', slug=subcat_item.category.slug) }}">
+                            <span>{{ subcat_item.category.name }}</span>
+                            <span class="subcategory-count">{{ subcat_item.product_count }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                <a href="{{ url_for('main.category_view', slug=item.category.slug) }}" class="view-all-link">
+                    View all {{ item.category.name }} →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 E-Shop. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

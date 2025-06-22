@@ -144,6 +144,7 @@
             <h1><a href="{{ url_for('main.home') }}" style="color: white; text-decoration: none;">E-Shop</a></h1>
             <div class="nav-links">
                 <a href="{{ url_for('main.home') }}">Home</a>
+                <a href="{{ url_for('main.categories_list') }}">Categories</a>
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('auth.logout') }}">Logout ({{ current_user.email }})</a>
                 {% else %}
@@ -160,7 +161,17 @@
     <div class="product-detail">
         <div class="breadcrumb">
             <a href="{{ url_for('main.home') }}">Home</a> / 
-            <a href="#">{{ product.category }}</a> / 
+            {% if product.category_obj %}
+                {% for cat in product.category_obj.get_path() %}
+                    {% if not loop.last %}
+                        <a href="{{ url_for('main.category_view', slug=cat.slug) }}">{{ cat.name }}</a> / 
+                    {% else %}
+                        <a href="{{ url_for('main.category_view', slug=cat.slug) }}">{{ cat.name }}</a> / 
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <a href="#">{{ product.category }}</a> / 
+            {% endif %}
             {{ product.name }}
         </div>
 

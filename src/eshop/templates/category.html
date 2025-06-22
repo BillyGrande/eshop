@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category.name }} - E-Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .breadcrumb {
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .breadcrumb a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb span {
+            margin: 0 5px;
+            color: #6c757d;
+        }
+        .category-header {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .category-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .category-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .subcategories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        .subcategory-link {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .subcategory-link:hover {
+            background: #007bff;
+            color: white;
+        }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            transition: transform 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .product-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .product-card .brand {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .product-card .price {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 10px;
+        }
+        .no-products {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1><a href="{{ url_for('main.home') }}" style="text-decoration: none; color: inherit;">E-Shop</a></h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search for products...">
+                    <button type="submit">Search</button>
+                </div>
+                <div class="header-actions">
+                    {% if current_user.is_authenticated %}
+                        <span>Welcome, {{ current_user.email }}</span>
+                        <a href="{{ url_for('cart.view_cart') }}">Cart</a>
+                        <a href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}">Login</a>
+                        <a href="{{ url_for('auth.register') }}">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                    <li><a href="{{ url_for('main.categories_list') }}" class="active">Categories</a></li>
+                    <li><a href="{{ url_for('main.deals') }}">Deals</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <span>/</span>
+            {% for cat in breadcrumb %}
+                {% if loop.last %}
+                    <span>{{ cat.name }}</span>
+                {% else %}
+                    <a href="{{ url_for('main.category_view', slug=cat.slug) }}">{{ cat.name }}</a>
+                    <span>/</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Category Header -->
+        <div class="category-header">
+            <h1>{{ category.name }}</h1>
+            {% if category.description %}
+                <p>{{ category.description }}</p>
+            {% endif %}
+            <p>{{ products|length }} products found</p>
+        </div>
+
+        <!-- Subcategories -->
+        {% if category.children %}
+        <div class="subcategories">
+            {% for subcategory in category.children %}
+                <a href="{{ url_for('main.category_view', slug=subcategory.slug) }}" class="subcategory-link">
+                    {{ subcategory.name }} ({{ subcategory.get_product_count() }})
+                </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Products Grid -->
+        {% if products %}
+        <div class="products-grid">
+            {% for product in products %}
+            <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-card">
+                <img src="{{ url_for('main.serve_placeholder', filename='placeholder.jpg') }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+                <p class="brand">{{ product.brand }}</p>
+                <p class="price">${{ "%.2f"|format(product.get_discounted_price()) }}</p>
+                {% if product.discount_percentage > 0 %}
+                    <span style="text-decoration: line-through; color: #999; font-size: 0.9em;">${{ "%.2f"|format(product.price) }}</span>
+                    <span style="color: #ff0000; font-size: 0.9em;">-{{ product.discount_percentage }}%</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-products">
+            <h2>No products found in this category</h2>
+            <p>Check back later for new arrivals!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 E-Shop. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

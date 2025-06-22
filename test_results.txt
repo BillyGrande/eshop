@@ -1,0 +1,39 @@
+/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py:35: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  product = Product.query.get(bs.product_id)
+/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py:49: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  product = Product.query.get(tp.product_id)
+/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py:70: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  timestamp=datetime.utcnow() - timedelta(minutes=i)
+/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py:101: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  timestamp=datetime.utcnow() - timedelta(hours=i)
+=== Testing Personalization Algorithms ===
+
+1. Testing Best Sellers Algorithm...
+   ✓ Found 5 best sellers
+     - MasterClass Educational Course Bundle: sales=8
+     - MasterClass Educational Course Bundle: sales=8
+     - MasterClass Educational Course Bundle: sales=8
+
+2. Testing Trending Products Algorithm...
+   ✓ Found 5 trending products
+     - Sony Wireless Noise-Canceling Headphones: score=0.09
+     - Bose Wireless Noise-Canceling Headphones: score=0.09
+     - Apple Wireless Noise-Canceling Headphones: score=0.09
+
+3. Testing Guest Recommendations...
+Redis not available, using in-memory cache only
+   ✓ Initial recommendations: 10 products
+   ✓ Cold start recommendations after 5 interactions: 10 products
+
+4. Testing Authenticated User Recommendations...
+   ✓ New user recommendations: 10 products
+   ✓ Minimal data recommendations (10 interactions): 10 products
+
+5. Testing Hybrid Recommender...
+Traceback (most recent call last):
+  File "/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py", line 207, in <module>
+    test_all_algorithms()
+  File "/home/billy/pyprojects/eshop-pyxiakh/eshop/test_personalization.py", line 115, in test_all_algorithms
+    weights = hybrid._determine_weights(test_user.id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'HybridRecommender' object has no attribute '_determine_weights'

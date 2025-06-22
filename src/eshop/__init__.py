@@ -28,6 +28,9 @@ def create_app():
     from .checkout import checkout
     app.register_blueprint(checkout)
     
+    from .admin_views import admin
+    app.register_blueprint(admin)
+    
     with app.app_context():
         db.create_all()
     

@@ -4,6 +4,7 @@ from collections import defaultdict
 import math
 
 from .models import db, Product, Order, OrderItem, UserInteraction, GuestInteraction, BestSeller, TrendingProduct
+from .recommendation_cache import cached_recommendation
 
 
 class AnalyticsEngine:
@@ -264,6 +265,7 @@ class AnalyticsEngine:
         return 1.0
     
     @staticmethod
+    @cached_recommendation(ttl=1800)  # Cache for 30 minutes
     def get_best_sellers(time_window='30d', category=None, limit=10):
         """
         Retrieve best sellers from cache.
@@ -279,6 +281,7 @@ class AnalyticsEngine:
         return [bs.product for bs in query.all()]
     
     @staticmethod
+    @cached_recommendation(ttl=900)  # Cache for 15 minutes
     def get_trending_products(category=None, limit=10):
         """
         Retrieve trending products from cache.
